@@ -2146,15 +2146,6 @@ class C
             throw new Exception();
         }
     }
-
-    IEnumerable<int> YieldLoop(bool cond)
-    {
-        while (cond)
-        {
-            // Allow non-local exit from loop
-            yield return 1;
-        }
-    }
 }";
             await VerifyCS.VerifyAnalyzerAsync(test);
         }

@@ -54,6 +54,8 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             context.EnableConcurrentExecution();
 
             context.RegisterSyntaxNodeAction(AnalyzeBlock, SyntaxKind.Block);
+
+            // Yield statements are exempted. Yielding in the loop is natural.
             context.RegisterSyntaxNodeAction(AnalyzeNonLocalExitInLoop,
                 SyntaxKind.ReturnStatement,
                 SyntaxKind.ThrowStatement,
