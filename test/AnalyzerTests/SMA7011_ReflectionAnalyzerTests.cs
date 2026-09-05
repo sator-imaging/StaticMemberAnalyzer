@@ -84,5 +84,31 @@ namespace Test
                 VerifyCS.Diagnostic(ReflectionAnalyzer.RuleId_SystemReflectionUsage).WithLocation(1).WithArguments("GetMembers", "MemberInfo")
             );
         }
+
+        [TestMethod]
+        public async Task SMA7011_Violation_TupleDeclaration()
+        {
+            var test = @"
+using System.Reflection;
+
+namespace Test
+{
+    public class C
+    {
+        static (MethodInfo, PropertyInfo) GetTuple() => (null, null);
+
+        public void M()
+        {
+            var (a, b) = {|#0:GetTuple()|};
+            (MethodInfo mi, PropertyInfo pi) = {|#1:GetTuple()|};
+        }
+    }
+}
+";
+            await VerifyCS.VerifyAnalyzerAsync(test,
+                VerifyCS.Diagnostic(ReflectionAnalyzer.RuleId_SystemReflectionUsage).WithLocation(0).WithArguments("GetTuple", "MethodInfo"),
+                VerifyCS.Diagnostic(ReflectionAnalyzer.RuleId_SystemReflectionUsage).WithLocation(1).WithArguments("GetTuple", "MethodInfo")
+            );
+        }
     }
 }
