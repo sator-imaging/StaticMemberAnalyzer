@@ -29,6 +29,7 @@ class C
                 {|#0:return|} i;
             }
         }
+        Console.WriteLine();
         return -1;
     }
 
@@ -38,6 +39,7 @@ class C
         {
             {|#1:throw|} new InvalidOperationException();
         }
+        Console.WriteLine();
     }
 
     void ThrowExpressionInForeachLoop(string[] items)
@@ -46,6 +48,7 @@ class C
         {
             string s = item ?? {|#2:throw|} new ArgumentNullException();
         }
+        Console.WriteLine();
     }
 }";
             var expected0 = VerifyCS.Diagnostic(MidFlowBranchAnalyzer.RuleId_NonLocalExitFromLoop).WithLocation(0);
@@ -146,6 +149,43 @@ class C
             f();
             LocalFunc();
         }
+    }
+}";
+            await VerifyCS.VerifyAnalyzerAsync(test);
+        }
+
+        [TestMethod]
+        public async Task SMA8032_Compliant_LastStatementInLoopFollowedByThrowOrReturn()
+        {
+            var test = @"
+using System;
+using System.Collections.Generic;
+
+class C
+{
+    int ReturnInForLoop(int[] items)
+    {
+        for (int i = 0; i < items.Length; i++)
+        {
+            if (items[i] == 0)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    int ReturnInElseIfInForeachLoop(int[] items, bool foo, bool bar)
+    {
+        foreach (var item in items)
+        {
+            if (foo)
+            {
+                return 1;
+            }
+            else if (bar) return 2;
+        }
+        throw new Exception();
     }
 }";
             await VerifyCS.VerifyAnalyzerAsync(test);
