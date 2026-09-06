@@ -148,11 +148,10 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
 
         private static void AnalyzeNonLocalExitInLoop(SyntaxNodeAnalysisContext context)
         {
-            var loopNode = GetEnclosingLoop(context.Node);
-            if (loopNode == null)
+            if (!IsInsideLoop(context.Node, out bool isLastStatement, out var loopNode))
                 return;
 
-            if (IsLastStatementInHierarchyUpToLoop(context.Node, loopNode))
+            if (isLastStatement && loopNode != null)
             {
                 var nextStmt = GetNextStatementAfter(loopNode);
                 if (nextStmt != null && IsReturnOrThrowStatement(nextStmt))
@@ -168,69 +167,42 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             context.ReportDiagnostic(Diagnostic.Create(Rule_NonLocalExitFromLoop, location));
         }
 
-        private static SyntaxNode? GetEnclosingLoop(SyntaxNode node)
+        private static bool IsInsideLoop(SyntaxNode node, out bool isLastStatement, out SyntaxNode? loopNode)
         {
-            var current = node.Parent;
+            isLastStatement = true;
+            loopNode = null;
+
+            SyntaxNode child = node is ThrowExpressionSyntax throwExpr
+                ? throwExpr.FirstAncestorOrSelf<StatementSyntax>() ?? node
+                : node;
+
+            var current = child.Parent;
             while (current != null)
             {
                 if (IsMethodLikeSyntax(current))
                 {
-                    return null;
+                    return false;
+                }
+
+                if (current is BlockSyntax block)
+                {
+                    if (block.Statements.Count > 0 && block.Statements[block.Statements.Count - 1] != child)
+                    {
+                        isLastStatement = false;
+                    }
                 }
 
                 if (IsLoopSyntax(current))
                 {
-                    return current;
-                }
-
-                current = current.Parent;
-            }
-
-            return null;
-        }
-
-        private static bool IsLastStatementInHierarchyUpToLoop(SyntaxNode exitNode, SyntaxNode loopNode)
-        {
-            SyntaxNode? startNode = exitNode is ThrowExpressionSyntax throwExpr
-                ? throwExpr.FirstAncestorOrSelf<StatementSyntax>()
-                : exitNode as StatementSyntax;
-
-            if (startNode == null)
-                return false;
-
-            SyntaxNode current = startNode;
-            while (current != null && current != loopNode)
-            {
-                SyntaxNode? parent = current.Parent;
-                if (parent == null)
-                    return false;
-
-                if (parent == loopNode)
-                {
+                    loopNode = current;
                     return true;
                 }
 
-                if (parent is BlockSyntax block)
-                {
-                    if (!IsLastInStatementList(block.Statements, current))
-                    {
-                        return false;
-                    }
-                }
-                else if (IsMethodLikeSyntax(parent) || IsLoopSyntax(parent))
-                {
-                    return false;
-                }
-
-                current = parent;
+                child = current;
+                current = current.Parent;
             }
 
             return false;
-        }
-
-        private static bool IsLastInStatementList(SyntaxList<StatementSyntax> statements, SyntaxNode current)
-        {
-            return statements.Count > 0 && statements[statements.Count - 1] == current;
         }
 
         private static StatementSyntax? GetNextStatementAfter(SyntaxNode node)
@@ -247,16 +219,9 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                 if (parent is BlockSyntax block)
                 {
                     int index = block.Statements.IndexOf((StatementSyntax)current);
-                    if (index >= 0)
+                    if (index >= 0 && index + 1 < block.Statements.Count)
                     {
-                        for (int i = index + 1; i < block.Statements.Count; i++)
-                        {
-                            var stmt = block.Statements[i];
-                            if (stmt is not EmptyStatementSyntax)
-                            {
-                                return stmt;
-                            }
-                        }
+                        return block.Statements[index + 1];
                     }
                     current = block;
                     continue;
