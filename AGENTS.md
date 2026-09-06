@@ -17,4 +17,4 @@ Change this to:
 for (int i = 0, count = list.Count; i < count; i++)
 ```
 
-This can reduce property access that is not inlined in older runtime.
+This can reduce property access that is not inlined in older runtime. Note that array `.Length` access does not require this optimization as JIT optimizes array loops.
