@@ -67,12 +67,16 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             if (context.Node is not BlockSyntax block)
                 return;
 
+            bool isRootBlockComputed = false;
+            bool isRootBlock = false;
             bool isMainFlowStarted = false;
             bool hasDeclarationInCurrentSequence = false;
             bool hasSeenIf = false;
 
-            foreach (var statement in block.Statements)
+            for (int i = 0, count = block.Statements.Count; i < count; i++)
             {
+                var statement = block.Statements[i];
+
                 if (statement is EmptyStatementSyntax)
                 {
                     continue;
@@ -109,7 +113,15 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                         isMainFlowStarted = false;
                     }
 
-                    if (isMainFlowStarted)
+                    if (!isRootBlockComputed)
+                    {
+                        isRootBlockComputed = true;
+                        isRootBlock = IsMethodOrLoopRoot(block.Parent);
+                    }
+
+                    bool isLastInRootBlock = isRootBlock && i == count - 1;
+
+                    if (isMainFlowStarted && !isLastInRootBlock)
                     {
                         CheckAndReportMidFlowBranches(context, ifStmt);
                     }
@@ -357,6 +369,19 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             }
 
             CollectAndReportBranchesInIfBranch(context, ifStmt);
+        }
+
+        private static bool IsMethodOrLoopRoot(SyntaxNode? node)
+        {
+            return node is BaseMethodDeclarationSyntax
+                or LocalFunctionStatementSyntax
+                or AccessorDeclarationSyntax
+                or AnonymousFunctionExpressionSyntax
+                or ForStatementSyntax
+                or ForEachStatementSyntax
+                or ForEachVariableStatementSyntax
+                or WhileStatementSyntax
+                or DoStatementSyntax;
         }
 
         private static void CollectAndReportBranchesInIfBranch(SyntaxNodeAnalysisContext context, IfStatementSyntax ifStmt)

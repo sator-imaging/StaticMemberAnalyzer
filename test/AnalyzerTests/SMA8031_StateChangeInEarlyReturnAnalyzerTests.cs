@@ -431,6 +431,8 @@ class C
         {
             str = str ?? {|#0:throw|} new ArgumentNullException(nameof(str));
         }
+
+        DoWork();
     }
 }";
             var expected = VerifyCS.Diagnostic(MidFlowBranchAnalyzer.RuleId_MidFlowBranch).WithLocation(0);
