@@ -2125,11 +2125,12 @@ class C
 
         if (cond1)
         {
-            return;
+            DoWork();
+            // Last if statement can omit return
         }
         else if (cond2)
         {
-            // Last if statement can omit return
+
         }
     }
 }";
