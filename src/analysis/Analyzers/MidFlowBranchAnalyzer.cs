@@ -210,7 +210,14 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                     return IsLoopBody(loopNode, child);
                 }
 
-                if (!IsLastInParent(parent, child))
+                if (parent is BlockSyntax block)
+                {
+                    if (!IsLastInStatementList(block.Statements, child))
+                    {
+                        return false;
+                    }
+                }
+                else if (IsMethodLikeSyntax(parent) || IsLoopSyntax(parent))
                 {
                     return false;
                 }
@@ -218,6 +225,18 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                 child = parent;
             }
 
+            return false;
+        }
+
+        private static bool IsLastInStatementList(SyntaxList<StatementSyntax> statements, SyntaxNode child)
+        {
+            for (int i = statements.Count - 1; i >= 0; i--)
+            {
+                var stmt = statements[i];
+                if (stmt is EmptyStatementSyntax)
+                    continue;
+                return stmt == child;
+            }
             return false;
         }
 
@@ -232,90 +251,6 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                 DoStatementSyntax doStmt => child == doStmt.Statement,
                 _ => false,
             };
-        }
-
-        private static bool IsLastInParent(SyntaxNode parent, SyntaxNode child)
-        {
-            if (parent is BlockSyntax block)
-            {
-                for (int i = block.Statements.Count - 1; i >= 0; i--)
-                {
-                    var stmt = block.Statements[i];
-                    if (stmt is EmptyStatementSyntax)
-                        continue;
-                    return stmt == child;
-                }
-                return false;
-            }
-
-            if (parent is IfStatementSyntax ifStmt)
-            {
-                return child == ifStmt.Statement || child == ifStmt.Else;
-            }
-
-            if (parent is ElseClauseSyntax elseClause)
-            {
-                return child == elseClause.Statement;
-            }
-
-            if (parent is SwitchSectionSyntax switchSection)
-            {
-                for (int i = switchSection.Statements.Count - 1; i >= 0; i--)
-                {
-                    var stmt = switchSection.Statements[i];
-                    if (stmt is EmptyStatementSyntax)
-                        continue;
-                    return stmt == child;
-                }
-                return false;
-            }
-
-            if (parent is SwitchStatementSyntax)
-            {
-                return child is SwitchSectionSyntax;
-            }
-
-            if (parent is TryStatementSyntax tryStmt)
-            {
-                return child == tryStmt.Block || tryStmt.Catches.Contains(child) || child == tryStmt.Finally;
-            }
-
-            if (parent is CatchClauseSyntax catchClause)
-            {
-                return child == catchClause.Block;
-            }
-
-            if (parent is FinallyClauseSyntax finallyClause)
-            {
-                return child == finallyClause.Block;
-            }
-
-            if (parent is LabeledStatementSyntax labeledStmt)
-            {
-                return child == labeledStmt.Statement;
-            }
-
-            if (parent is UsingStatementSyntax usingStmt)
-            {
-                return child == usingStmt.Statement;
-            }
-
-            if (parent is FixedStatementSyntax fixedStmt)
-            {
-                return child == fixedStmt.Statement;
-            }
-
-            if (parent is LockStatementSyntax lockStmt)
-            {
-                return child == lockStmt.Statement;
-            }
-
-            if (parent is UnsafeStatementSyntax unsafeStmt)
-            {
-                return child == unsafeStmt.Block;
-            }
-
-            return false;
         }
 
         private static StatementSyntax? GetNextStatementAfter(SyntaxNode node)
@@ -347,34 +282,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                     continue;
                 }
 
-                if (parent is SwitchSectionSyntax switchSection)
-                {
-                    int index = switchSection.Statements.IndexOf((StatementSyntax)current);
-                    if (index >= 0)
-                    {
-                        for (int i = index + 1; i < switchSection.Statements.Count; i++)
-                        {
-                            var stmt = switchSection.Statements[i];
-                            if (stmt is not EmptyStatementSyntax)
-                            {
-                                return stmt;
-                            }
-                        }
-                    }
-                    current = switchSection;
-                    continue;
-                }
-
-                if (parent is IfStatementSyntax or ElseClauseSyntax or SwitchStatementSyntax
-                    or TryStatementSyntax or CatchClauseSyntax or FinallyClauseSyntax
-                    or UsingStatementSyntax or LockStatementSyntax or FixedStatementSyntax
-                    or UnsafeStatementSyntax or LabeledStatementSyntax)
-                {
-                    current = parent;
-                    continue;
-                }
-
-                return null;
+                current = parent;
             }
 
             return null;
