@@ -204,14 +204,9 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                 return false;
 
             var nextStatement = parentBlock.Statements[count - 1];
-            return nextStatement is ReturnStatementSyntax or ThrowStatementSyntax
-                || (
-                    nextStatement is ExpressionStatementSyntax exprStmt
-                    && (
-                        exprStmt.Expression is ThrowExpressionSyntax ||
-                        exprStmt.Expression.DescendantNodes().Any(static n => n is ThrowExpressionSyntax)
-                    )
-                );
+
+            // Don't support throw expression (`?? throw`) as it may or may not throw.
+            return nextStatement is ReturnStatementSyntax or ThrowStatementSyntax;
         }
 
         private static bool IsLoopSyntax(SyntaxNode? node)
