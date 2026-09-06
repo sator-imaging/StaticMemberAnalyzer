@@ -754,6 +754,8 @@ class C
             {
                 {|#0:continue|};
             }
+
+            DoSomething(x);
         } while (cond);
     }
 }";
@@ -804,6 +806,8 @@ class C
             {
                 {|#0:return|};
             }
+
+            DoSomething(value);
         }
     }
 }";
@@ -1010,6 +1014,8 @@ using System;
 
 class C
 {
+    void DoSomething() { }
+
     void M(bool foo, bool bar)
     {
         int x = 10;
@@ -1023,6 +1029,8 @@ class C
         {
             {|#1:throw|} new Exception();
         }
+
+        DoSomething();
     }
 }";
             await VerifyCS.VerifyAnalyzerAsync(test,
@@ -1039,6 +1047,8 @@ using System.Collections.Generic;
 
 class C
 {
+    void DoSomething() { }
+
     IEnumerable<int> M(bool foo, bool bar)
     {
         int count = 0;
@@ -1052,6 +1062,8 @@ class C
         {
             {|#1:throw|} new Exception();
         }
+
+        DoSomething();
     }
 }";
             await VerifyCS.VerifyAnalyzerAsync(test,
@@ -1082,6 +1094,8 @@ class C
         {
             // Do nothing
         }
+
+        DoSomething();
     }
 
     void Return2(bool foo, bool bar)
@@ -1096,6 +1110,8 @@ class C
         {
             // Do nothing
         }
+
+        DoSomething();
     }
 
     IEnumerable<int> Yield1(bool foo)
@@ -1110,6 +1126,8 @@ class C
         {
             // Do nothing
         }
+
+        DoSomething();
     }
 
     IEnumerable<int> Yield2(bool foo, bool bar)
@@ -1124,6 +1142,8 @@ class C
         {
             // Do nothing
         }
+
+        DoSomething();
     }
 
     void Throw1(bool foo)
@@ -1138,6 +1158,8 @@ class C
         {
             // Do nothing
         }
+
+        DoSomething();
     }
 
     void Throw2(bool foo, bool bar)
@@ -1152,6 +1174,8 @@ class C
         {
             // Do nothing
         }
+
+        DoSomething();
     }
 }";
             var expected0 = VerifyCS.Diagnostic(MidFlowBranchAnalyzer.RuleId_MidFlowBranch).WithLocation(0);
@@ -1186,6 +1210,8 @@ class C
         {
             {|#0:return|};
         }
+
+        DoSomething();
     }
 
     void Return2(bool foo, bool bar)
@@ -1204,6 +1230,8 @@ class C
         {
             {|#1:return|};
         }
+
+        DoSomething();
     }
 
     IEnumerable<int> Yield1(bool foo)
@@ -1218,6 +1246,8 @@ class C
         {
             {|#2:yield|} return 1;
         }
+
+        DoSomething();
     }
 
     IEnumerable<int> Yield2(bool foo, bool bar)
@@ -1236,6 +1266,8 @@ class C
         {
             {|#3:yield|} return 1;
         }
+
+        DoSomething();
     }
 
     void Throw1(bool foo)
@@ -1250,6 +1282,8 @@ class C
         {
             {|#4:throw|} new Exception();
         }
+
+        DoSomething();
     }
 
     void Throw2(bool foo, bool bar)
@@ -1268,6 +1302,8 @@ class C
         {
             {|#5:throw|} new Exception();
         }
+
+        DoSomething();
     }
 }";
             var expected0 = VerifyCS.Diagnostic(MidFlowBranchAnalyzer.RuleId_MidFlowBranch).WithLocation(0);
@@ -1302,6 +1338,8 @@ class C
         {
             {|#0:return|};
         }
+
+        DoSomething();
     }
 
     void Return2(bool foo, bool bar)
@@ -1320,6 +1358,8 @@ class C
         {
             // Do nothing
         }
+
+        DoSomething();
     }
 
     IEnumerable<int> Yield1(bool foo, bool bar)
@@ -1334,6 +1374,8 @@ class C
         {
             {|#2:yield|} return 1;
         }
+
+        DoSomething();
     }
 
     IEnumerable<int> Yield2(bool foo, bool bar)
@@ -1352,6 +1394,8 @@ class C
         {
             // Do nothing
         }
+
+        DoSomething();
     }
 
     void Throw1(bool foo, bool bar)
@@ -1366,6 +1410,8 @@ class C
         {
             {|#4:throw|} new Exception();
         }
+
+        DoSomething();
     }
 
     void Throw2(bool foo, bool bar)
@@ -1384,6 +1430,8 @@ class C
         {
             // Do nothing
         }
+
+        DoSomething();
     }
 }";
             var expected0 = VerifyCS.Diagnostic(MidFlowBranchAnalyzer.RuleId_MidFlowBranch).WithLocation(0);
@@ -1662,6 +1710,8 @@ class C
             {
                 {|#0:break|};
             }
+
+            DoSomething(x);
         }
     }
 }";
@@ -2038,6 +2088,140 @@ class C
     }
 }";
             await VerifyCS.VerifyAnalyzerAsync(test);
+        }
+
+        [TestMethod]
+        public async Task SMA8030_Compliant_LastIfAtMethodRootLevel_WithoutElse()
+        {
+            var test = @"
+class C
+{
+    void DoWork() { }
+
+    void M(bool cond)
+    {
+        DoWork();
+
+        if (cond)
+        {
+            return;
+        }
+    }
+}";
+            await VerifyCS.VerifyAnalyzerAsync(test);
+        }
+
+        [TestMethod]
+        public async Task SMA8030_Compliant_LastIfAtMethodRootLevel_WithIncompleteElseIf()
+        {
+            var test = @"
+class C
+{
+    void DoWork() { }
+
+    void M(bool cond1, bool cond2)
+    {
+        DoWork();
+
+        if (cond1)
+        {
+            return;
+        }
+        else if (cond2)
+        {
+            return;
+        }
+    }
+}";
+            await VerifyCS.VerifyAnalyzerAsync(test);
+        }
+
+        [TestMethod]
+        public async Task SMA8030_Compliant_LastIfAtLoopRootLevel_ForAndWhileAndForeachAndDoWhile()
+        {
+            var test = @"
+class C
+{
+    void DoWork(int x) { }
+
+    void MFor(bool cond)
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            DoWork(i);
+
+            if (cond)
+            {
+                continue;
+            }
+        }
+    }
+
+    void MWhile(bool cond)
+    {
+        while (cond)
+        {
+            DoWork(1);
+
+            if (cond)
+            {
+                continue;
+            }
+        }
+    }
+
+    void MForeach(string[] items, bool cond)
+    {
+        foreach (var item in items)
+        {
+            DoWork(item?.Length ?? 0);
+
+            if (cond)
+            {
+                continue;
+            }
+        }
+    }
+
+    void MDoWhile(bool cond)
+    {
+        do
+        {
+            DoWork(1);
+
+            if (cond)
+            {
+                continue;
+            }
+        } while (cond);
+    }
+}";
+            await VerifyCS.VerifyAnalyzerAsync(test);
+        }
+
+        [TestMethod]
+        public async Task SMA8030_Exempt_LastIfInLoop_NonLocalExit_ReportsSMA8032()
+        {
+            var test = @"
+class C
+{
+    void DoWork(int x) { }
+
+    void M(int[] items)
+    {
+        for (int i = 0; i < items.Length; i++)
+        {
+            DoWork(items[i]);
+
+            if (items[i] == 0)
+            {
+                {|#0:return|};
+            }
+        }
+    }
+}";
+            var expected = VerifyCS.Diagnostic(MidFlowBranchAnalyzer.RuleId_NonLocalExitFromLoop).WithLocation(0);
+            await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
     }
 }

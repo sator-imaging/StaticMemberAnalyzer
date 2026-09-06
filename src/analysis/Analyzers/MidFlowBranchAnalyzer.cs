@@ -351,12 +351,71 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
 
         private static void CheckAndReportMidFlowBranches(SyntaxNodeAnalysisContext context, IfStatementSyntax ifStmt)
         {
+            if (IsLastIfAtMethodOrLoopRootLevel(ifStmt))
+            {
+                return;
+            }
+
             if (AllBranchesBranch(ifStmt))
             {
                 return;
             }
 
             CollectAndReportBranchesInIfBranch(context, ifStmt);
+        }
+
+        private static bool IsLastIfAtMethodOrLoopRootLevel(IfStatementSyntax ifStmt)
+        {
+            var currentIf = ifStmt;
+            while (currentIf.Parent is ElseClauseSyntax elseClause && elseClause.Parent is IfStatementSyntax parentIf)
+            {
+                currentIf = parentIf;
+            }
+
+            var parent = currentIf.Parent;
+            if (parent is BlockSyntax block)
+            {
+                int index = block.Statements.IndexOf(currentIf);
+                if (index < 0)
+                {
+                    return false;
+                }
+
+                for (int i = index + 1; i < block.Statements.Count; i++)
+                {
+                    if (block.Statements[i] is not EmptyStatementSyntax)
+                    {
+                        return false;
+                    }
+                }
+
+                var container = block.Parent;
+                return IsMethodOrLoopRoot(container);
+            }
+
+            return IsLoopRoot(parent);
+        }
+
+        private static bool IsMethodOrLoopRoot(SyntaxNode? node)
+        {
+            return IsMethodRoot(node) || IsLoopRoot(node);
+        }
+
+        private static bool IsMethodRoot(SyntaxNode? node)
+        {
+            return node is BaseMethodDeclarationSyntax
+                or LocalFunctionStatementSyntax
+                or AccessorDeclarationSyntax
+                or AnonymousFunctionExpressionSyntax;
+        }
+
+        private static bool IsLoopRoot(SyntaxNode? node)
+        {
+            return node is ForStatementSyntax
+                or ForEachStatementSyntax
+                or ForEachVariableStatementSyntax
+                or WhileStatementSyntax
+                or DoStatementSyntax;
         }
 
         private static void CollectAndReportBranchesInIfBranch(SyntaxNodeAnalysisContext context, IfStatementSyntax ifStmt)
