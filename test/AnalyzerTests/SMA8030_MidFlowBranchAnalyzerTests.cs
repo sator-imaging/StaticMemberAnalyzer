@@ -2129,7 +2129,7 @@ class C
         }
         else if (cond2)
         {
-            return;
+            // Last if statement can omit return
         }
     }
 }";
@@ -2221,6 +2221,55 @@ class C
     }
 }";
             var expected = VerifyCS.Diagnostic(MidFlowBranchAnalyzer.RuleId_NonLocalExitFromLoop).WithLocation(0);
+            await VerifyCS.VerifyAnalyzerAsync(test, expected);
+        }
+
+        [TestMethod]
+        public async Task SMA8030_Violation_TrailingEmptyStatement_Method()
+        {
+            var test = @"
+class C
+{
+    void DoWork() { }
+
+    void M(bool cond)
+    {
+        DoWork();
+
+        if (cond)
+        {
+            {|#0:return|};
+        }
+        ;
+    }
+}";
+            var expected = VerifyCS.Diagnostic(MidFlowBranchAnalyzer.RuleId_MidFlowBranch).WithLocation(0);
+            await VerifyCS.VerifyAnalyzerAsync(test, expected);
+        }
+
+        [TestMethod]
+        public async Task SMA8030_Violation_TrailingEmptyStatement_Loop()
+        {
+            var test = @"
+class C
+{
+    void DoWork(int x) { }
+
+    void M()
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            DoWork(i);
+
+            if (i == 5)
+            {
+                {|#0:continue|};
+            }
+            ;
+        }
+    }
+}";
+            var expected = VerifyCS.Diagnostic(MidFlowBranchAnalyzer.RuleId_MidFlowBranch).WithLocation(0);
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
     }
