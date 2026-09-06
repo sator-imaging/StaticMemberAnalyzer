@@ -2349,5 +2349,26 @@ class C
             var expected = VerifyCS.Diagnostic(MidFlowBranchAnalyzer.RuleId_MidFlowBranch).WithLocation(0);
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
+
+        [TestMethod]
+        public async Task SMA8032_NonLocalExitFromLoop_FallbackLocation()
+        {
+            var test = @"
+class C
+{
+    void M()
+    {
+        while (true)
+        {
+            if (true)
+            {
+                {|#0:return|};
+            }
+        }
+    }
+}";
+            var expected = VerifyCS.Diagnostic(MidFlowBranchAnalyzer.RuleId_NonLocalExitFromLoop).WithLocation(0);
+            await VerifyCS.VerifyAnalyzerAsync(test, expected);
+        }
     }
 }

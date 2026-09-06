@@ -594,6 +594,9 @@ Performing state modifications (such as reassignments or field updates) or calli
 ### Mid-flow Exits (SMA8030)
 Once the main flow has started, exiting inside an incomplete branch (an `if` statement that does not exit in all code paths) is prohibited (**SMA8030**).
 
+> [!NOTE]
+> An `if` statement (with or without an `else` clause) that is the last statement at the method root level or loop root level is exempted from this exit completeness check.
+
 ```cs
 if (!IsValid()) return;  // Early return is allowed.
 

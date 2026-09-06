@@ -562,5 +562,31 @@ namespace Foo.Bar
             test.ExpectedDiagnostics.Add(VerifyCS.Diagnostic().WithLocation(0).WithArguments("Value", "Foo.Bar", "Foo"));
             await test.RunAsync();
         }
+
+        [TestMethod]
+        public async Task SMA0080_Violation_CrossNamespaceAccess_MethodInvocation()
+        {
+            var test = @"
+namespace Target
+{
+    internal class Helper
+    {
+        public static void DoIt() { }
+    }
+}
+
+namespace Consumer
+{
+    public class C
+    {
+        public void Run()
+        {
+            {|#0:Target.Helper.DoIt()|};
+        }
+    }
+}";
+            var expected = VerifyCS.Diagnostic().WithLocation(0).WithArguments("DoIt", "Consumer", "Target");
+            await VerifyCS.VerifyAnalyzerAsync(test, expected);
+        }
     }
 }

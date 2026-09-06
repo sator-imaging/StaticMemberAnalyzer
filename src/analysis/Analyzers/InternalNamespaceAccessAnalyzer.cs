@@ -611,11 +611,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             IOperation operation,
             ISymbol? symbol)
         {
-            var location = operation.Syntax.GetLocation();
-            if (location == null)
-            {
-                return;
-            }
+            var location = operation.Syntax?.GetLocation() ?? context.ContainingSymbol?.Locations[0] ?? Location.None;
 
             ReportCrossNamespaceAccess(
                 context.Compilation,
@@ -633,7 +629,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             ReportCrossNamespaceAccess(
                 context.Compilation,
                 context.Symbol.ContainingNamespace,
-                location,
+                location ?? context.Symbol.Locations[0] ?? Location.None,
                 type,
                 context.ReportDiagnostic);
         }
@@ -681,6 +677,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             ISymbol? symbol,
             System.Action<Diagnostic> reportDiagnostic)
         {
+            location ??= Location.None;
             var restrictedSymbol = FindRestrictedSymbol(symbol);
             if (restrictedSymbol == null)
             {
