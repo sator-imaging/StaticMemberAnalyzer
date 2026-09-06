@@ -67,12 +67,13 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             if (context.Node is not BlockSyntax block)
                 return;
 
-            bool isRootBlock = IsMethodOrLoopRoot(block.Parent);
+            bool isRootBlockComputed = false;
+            bool isRootBlock = false;
             bool isMainFlowStarted = false;
             bool hasDeclarationInCurrentSequence = false;
             bool hasSeenIf = false;
 
-            for (int i = 0; i < block.Statements.Count; i++)
+            for (int i = 0, count = block.Statements.Count; i < count; i++)
             {
                 var statement = block.Statements[i];
 
@@ -112,7 +113,13 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                         isMainFlowStarted = false;
                     }
 
-                    bool isLastInRootBlock = isRootBlock && IsLastStatementInBlock(block.Statements, i);
+                    if (!isRootBlockComputed)
+                    {
+                        isRootBlockComputed = true;
+                        isRootBlock = IsMethodOrLoopRoot(block.Parent);
+                    }
+
+                    bool isLastInRootBlock = isRootBlock && i == count - 1;
 
                     if (isMainFlowStarted)
                     {
@@ -137,18 +144,6 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                     isMainFlowStarted = true;
                 }
             }
-        }
-
-        private static bool IsLastStatementInBlock(SyntaxList<StatementSyntax> statements, int currentIndex)
-        {
-            for (int i = currentIndex + 1; i < statements.Count; i++)
-            {
-                if (statements[i] is not EmptyStatementSyntax)
-                {
-                    return false;
-                }
-            }
-            return true;
         }
 
         private static void AnalyzeNonLocalExitInLoop(SyntaxNodeAnalysisContext context)
