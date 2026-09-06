@@ -169,7 +169,9 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             var current = node;
             while (current != null)
             {
-                if (current.Parent is BlockSyntax block)
+                var parent = current.Parent;
+
+                if (parent is BlockSyntax block)
                 {
                     if (block.Statements[block.Statements.Count - 1] != current)
                     {
@@ -177,18 +179,18 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                     }
                 }
 
-                if (IsMethodLikeSyntax(current.Parent))
+                if (IsMethodLikeSyntax(parent))
                 {
                     return false;
                 }
 
-                if (IsLoopSyntax(current.Parent))
+                if (IsLoopSyntax(parent))
                 {
-                    loopStatement = current.Parent as StatementSyntax;
+                    loopStatement = parent as StatementSyntax;
                     return true;
                 }
 
-                current = current.Parent;
+                current = parent;
             }
 
             return false;
