@@ -198,21 +198,21 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             if (startNode == null)
                 return false;
 
-            SyntaxNode child = startNode;
-            while (child != null && child != loopNode)
+            SyntaxNode current = startNode;
+            while (current != null && current != loopNode)
             {
-                SyntaxNode? parent = child.Parent;
+                SyntaxNode? parent = current.Parent;
                 if (parent == null)
                     return false;
 
                 if (parent == loopNode)
                 {
-                    return IsLoopBody(loopNode, child);
+                    return true;
                 }
 
                 if (parent is BlockSyntax block)
                 {
-                    if (!IsLastInStatementList(block.Statements, child))
+                    if (!IsLastInStatementList(block.Statements, current))
                     {
                         return false;
                     }
@@ -222,35 +222,15 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                     return false;
                 }
 
-                child = parent;
+                current = parent;
             }
 
             return false;
         }
 
-        private static bool IsLastInStatementList(SyntaxList<StatementSyntax> statements, SyntaxNode child)
+        private static bool IsLastInStatementList(SyntaxList<StatementSyntax> statements, SyntaxNode current)
         {
-            for (int i = statements.Count - 1; i >= 0; i--)
-            {
-                var stmt = statements[i];
-                if (stmt is EmptyStatementSyntax)
-                    continue;
-                return stmt == child;
-            }
-            return false;
-        }
-
-        private static bool IsLoopBody(SyntaxNode loopNode, SyntaxNode child)
-        {
-            return loopNode switch
-            {
-                ForStatementSyntax forStmt => child == forStmt.Statement,
-                ForEachStatementSyntax foreachStmt => child == foreachStmt.Statement,
-                ForEachVariableStatementSyntax foreachVar => child == foreachVar.Statement,
-                WhileStatementSyntax whileStmt => child == whileStmt.Statement,
-                DoStatementSyntax doStmt => child == doStmt.Statement,
-                _ => false,
-            };
+            return statements.Count > 0 && statements[statements.Count - 1] == current;
         }
 
         private static StatementSyntax? GetNextStatementAfter(SyntaxNode node)
