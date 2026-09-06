@@ -26,7 +26,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             Core.CategoryPrefix + nameof(MidFlowBranchAnalyzer),
             DiagnosticSeverity.Error,
             isEnabledByDefault: true,
-            description: new LocalizableResourceString(nameof(Resources.SMA8030_Description), Resources.ResourceManager, typeof(Resources)));
+            description: new LocalizableResourceString(nameof(Resources.SMA8030_MessageFormat), Resources.ResourceManager, typeof(Resources)));
 
         private static readonly DiagnosticDescriptor Rule_StateChangeInEarlyReturn = new(
             RuleId_StateChangeInEarlyReturn,
@@ -35,7 +35,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             Core.CategoryPrefix + nameof(MidFlowBranchAnalyzer),
             DiagnosticSeverity.Error,
             isEnabledByDefault: true,
-            description: new LocalizableResourceString(nameof(Resources.SMA8031_Description), Resources.ResourceManager, typeof(Resources)));
+            description: new LocalizableResourceString(nameof(Resources.SMA8031_MessageFormat), Resources.ResourceManager, typeof(Resources)));
 
         private static readonly DiagnosticDescriptor Rule_NonLocalExitFromLoop = new(
             RuleId_NonLocalExitFromLoop,
@@ -44,7 +44,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             Core.CategoryPrefix + nameof(MidFlowBranchAnalyzer),
             DiagnosticSeverity.Error,
             isEnabledByDefault: true,
-            description: new LocalizableResourceString(nameof(Resources.SMA8032_Description), Resources.ResourceManager, typeof(Resources)));
+            description: new LocalizableResourceString(nameof(Resources.SMA8032_MessageFormat), Resources.ResourceManager, typeof(Resources)));
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule, Rule_StateChangeInEarlyReturn, Rule_NonLocalExitFromLoop);
 
