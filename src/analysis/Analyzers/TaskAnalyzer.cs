@@ -234,7 +234,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             var stack = new Stack<int>();
             stack.Push(declarationBlock);
 
-            while (stack.Count > 0)
+            do
             {
                 int currentOrdinal = stack.Pop();
                 if (visited.Contains(currentOrdinal))
@@ -266,6 +266,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                     stack.Push(currentBlock.ConditionalSuccessor.Destination.Ordinal);
                 }
             }
+            while (stack.Count > 0);
 
             inAllCodePaths = true;
             return true;

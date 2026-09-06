@@ -41,7 +41,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                 return;
 
             var symbol = context.ContainingSymbol;
-            while (symbol != null)
+            do
             {
                 if (symbol is IMethodSymbol method)
                 {
@@ -58,6 +58,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                 }
                 break;
             }
+            while (symbol != null);
 
             if (symbol == null)
                 return;

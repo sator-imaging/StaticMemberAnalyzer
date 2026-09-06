@@ -167,7 +167,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             loopStatement = null;
 
             var current = node;
-            while (current != null)
+            do
             {
                 var parent = current.Parent;
 
@@ -192,6 +192,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
 
                 current = parent;
             }
+            while (current != null);
 
             return false;
         }
@@ -415,7 +416,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
         private static void CollectAndReportBranchesInIfBranch(SyntaxNodeAnalysisContext context, IfStatementSyntax ifStmt)
         {
             IfStatementSyntax? currentIf = ifStmt;
-            while (currentIf != null)
+            do
             {
                 ReportBranchesInStatement(context, currentIf.Statement);
 
@@ -436,6 +437,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                     currentIf = null;
                 }
             }
+            while (currentIf != null);
         }
 
         private static void ReportBranchesInStatement(SyntaxNodeAnalysisContext context, StatementSyntax branchStatement)
@@ -482,7 +484,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
         private static bool AllBranchesBranch(IfStatementSyntax ifStmt)
         {
             IfStatementSyntax? current = ifStmt;
-            while (current != null)
+            do
             {
                 if (!BranchGuaranteesBranch(current.Statement))
                     return false;
@@ -499,6 +501,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                     return BranchGuaranteesBranch(current.Else.Statement);
                 }
             }
+            while (current != null);
 
             return false;
         }
