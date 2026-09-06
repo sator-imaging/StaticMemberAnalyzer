@@ -168,11 +168,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                     return false;
                 }
 
-                if (current is ForStatementSyntax
-                    or ForEachStatementSyntax
-                    or ForEachVariableStatementSyntax
-                    or WhileStatementSyntax
-                    or DoStatementSyntax)
+                if (IsInLoop(current))
                 {
                     return true;
                 }
@@ -181,6 +177,15 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             }
 
             return false;
+        }
+
+        private static bool IsInLoop(SyntaxNode? node)
+        {
+            return node is ForStatementSyntax
+                or ForEachStatementSyntax
+                or ForEachVariableStatementSyntax
+                or WhileStatementSyntax
+                or DoStatementSyntax;
         }
 
         private static bool HasNonLocalExitSuppression(SyntaxNode node)
@@ -335,12 +340,8 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
         private static bool ShouldDescendInto(SyntaxNode node)
         {
             return !(node is LocalFunctionStatementSyntax
-                or AnonymousFunctionExpressionSyntax
-                or ForStatementSyntax
-                or ForEachStatementSyntax
-                or ForEachVariableStatementSyntax
-                or WhileStatementSyntax
-                or DoStatementSyntax);
+                or AnonymousFunctionExpressionSyntax)
+                && !IsInLoop(node);
         }
 
         private static bool ContainsBranch(SyntaxNode node)
@@ -374,11 +375,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                 or LocalFunctionStatementSyntax
                 or AccessorDeclarationSyntax
                 or AnonymousFunctionExpressionSyntax
-                or ForStatementSyntax
-                or ForEachStatementSyntax
-                or ForEachVariableStatementSyntax
-                or WhileStatementSyntax
-                or DoStatementSyntax;
+                || IsInLoop(node);
         }
 
         private static void CollectAndReportBranchesInIfBranch(SyntaxNodeAnalysisContext context, IfStatementSyntax ifStmt)
