@@ -39,7 +39,6 @@ class C
         {
             {|#1:throw|} new InvalidOperationException();
         }
-        Console.WriteLine();
     }
 
     void ThrowExpressionInForeachLoop(string[] items)
@@ -48,7 +47,6 @@ class C
         {
             string s = item ?? {|#2:throw|} new ArgumentNullException();
         }
-        Console.WriteLine();
     }
 }";
             var expected0 = VerifyCS.Diagnostic(MidFlowBranchAnalyzer.RuleId_NonLocalExitFromLoop).WithLocation(0);
