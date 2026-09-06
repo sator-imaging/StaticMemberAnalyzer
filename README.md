@@ -597,11 +597,6 @@ In an early exit block before the main flow starts, only the following statement
 
 Performing state modifications (such as reassignments or field updates) or calling multiple methods before exiting will trigger an error (**SMA8031**).
 
-### Non-Local Exit from Loop (SMA8032)
-Prohibits `return` or `throw` statements inside loops.
-
-> [!NOTE]
-> A `return` or `throw` statement inside a loop is not reported if it is the last statement in the loop and the loop statement itself is immediately followed by a `return` or `throw` statement.
 
 ```cs
 if (!IsValid()) return;  // Early return is allowed.
