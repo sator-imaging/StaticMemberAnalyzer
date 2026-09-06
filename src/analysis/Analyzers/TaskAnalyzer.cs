@@ -150,7 +150,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                 return false;
             }
 
-            var handledBlocks = new HashSet<int>();
+            HashSet<int>? handledBlocks = null;
             int declarationBlock = -1;
             var allBlocks = cfg.Blocks;
 
@@ -159,68 +159,71 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                 var block = allBlocks[i];
                 bool isHandled = false;
 
-                var operations = new List<IOperation>(block.Operations.Length + 1);
+                List<IOperation>? operations = null;
                 foreach (var op in block.Operations)
                 {
-                    operations.Add(op);
+                    (operations ??= new List<IOperation>(block.Operations.Length + (block.BranchValue != null ? 1 : 0))).Add(op);
                 }
 
                 if (block.BranchValue != null)
                 {
-                    operations.Add(block.BranchValue);
+                    (operations ??= new List<IOperation>(1)).Add(block.BranchValue);
                 }
 
-                foreach (var op in operations)
+                if (operations != null)
                 {
-                    if (declarationBlock == -1 && op.Syntax.AncestorsAndSelf().Contains(variableDeclarator))
+                    foreach (var op in operations)
                     {
-                        declarationBlock = i;
-                    }
-
-                    foreach (var desc in op.DescendantsAndSelf())
-                    {
-                        if (desc is IAwaitOperation awaitOp)
+                        if (declarationBlock == -1 && op.Syntax.AncestorsAndSelf().Contains(variableDeclarator))
                         {
-                            var operand = awaitOp.Operation.UnwrapConversion();
+                            declarationBlock = i;
+                        }
 
-                            if (operand is ILocalReferenceOperation lr && SymbolEqualityComparer.Default.Equals(lr.Local, localSymbol))
+                        foreach (var desc in op.DescendantsAndSelf())
+                        {
+                            if (desc is IAwaitOperation awaitOp)
                             {
-                                isHandled = true;
-                                break;
+                                var operand = awaitOp.Operation.UnwrapConversion();
+
+                                if (operand is ILocalReferenceOperation lr && SymbolEqualityComparer.Default.Equals(lr.Local, localSymbol))
+                                {
+                                    isHandled = true;
+                                    break;
+                                }
+                            }
+                            else if (desc is IReturnOperation returnOp && returnOp.ReturnedValue != null)
+                            {
+                                var val = returnOp.ReturnedValue.UnwrapConversion();
+
+                                if (val is ILocalReferenceOperation lr && SymbolEqualityComparer.Default.Equals(lr.Local, localSymbol))
+                                {
+                                    isHandled = true;
+                                    break;
+                                }
+                            }
+                            else if (desc is ILocalReferenceOperation lr && SymbolEqualityComparer.Default.Equals(lr.Local, localSymbol))
+                            {
+                                if (op == block.BranchValue && block.FallThroughSuccessor?.Destination.Kind == BasicBlockKind.Exit)
+                                {
+                                    isHandled = true;
+                                    break;
+                                }
                             }
                         }
-                        else if (desc is IReturnOperation returnOp && returnOp.ReturnedValue != null)
+                        if (isHandled)
                         {
-                            var val = returnOp.ReturnedValue.UnwrapConversion();
-
-                            if (val is ILocalReferenceOperation lr && SymbolEqualityComparer.Default.Equals(lr.Local, localSymbol))
-                            {
-                                isHandled = true;
-                                break;
-                            }
+                            break;
                         }
-                        else if (desc is ILocalReferenceOperation lr && SymbolEqualityComparer.Default.Equals(lr.Local, localSymbol))
-                        {
-                            if (op == block.BranchValue && block.FallThroughSuccessor?.Destination.Kind == BasicBlockKind.Exit)
-                            {
-                                isHandled = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (isHandled)
-                    {
-                        break;
                     }
                 }
 
                 if (isHandled)
                 {
-                    handledBlocks.Add(i);
+                    (handledBlocks ??= new HashSet<int>()).Add(i);
                 }
             }
 
-            if (handledBlocks.Count == 0)
+            if (handledBlocks == null || handledBlocks.Count == 0)
             {
                 return false;
             }
@@ -230,14 +233,14 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                 return false;
             }
 
-            var visited = new HashSet<int>();
-            var stack = new Stack<int>();
-            stack.Push(declarationBlock);
+            HashSet<int>? visited = null;
+            Stack<int>? stack = null;
+            (stack ??= new Stack<int>()).Push(declarationBlock);
 
             do
             {
                 int currentOrdinal = stack.Pop();
-                if (visited.Contains(currentOrdinal))
+                if ((visited ??= new HashSet<int>()).Contains(currentOrdinal))
                 {
                     continue;
                 }
