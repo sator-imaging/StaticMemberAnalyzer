@@ -695,7 +695,7 @@ for (int i = 0; i < items.Length; i++)
 ```
 
 > [!TIP]
-> 可以在退出语句正上方添加以 `// Allow non-local exit from loop` 开头的注释（例如 `// Allow non-local exit from loop [ 原因（可选） ]`）来抑制 SMA8032 诊断。
+> 可以通过注释 `// Allow non-local exit from loop` 来抑制；详见 [通过注释抑制](#通过注释抑制) 章节。
 
 
 

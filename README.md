@@ -695,7 +695,7 @@ for (int i = 0; i < items.Length; i++)
 ```
 
 > [!TIP]
-> You can suppress SMA8032 by placing a comment starting with `// Allow non-local exit from loop` (e.g., `// Allow non-local exit from loop [ Reason (optional) ]`) immediately before the exit statement.
+> You can suppress by comment `// Allow non-local exit from loop`; See [Suppression Comment](#suppression-comment) section for detail.
 
 
 
