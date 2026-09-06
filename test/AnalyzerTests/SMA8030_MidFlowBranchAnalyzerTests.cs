@@ -2203,11 +2203,13 @@ class C
         public async Task SMA8030_Exempt_LastIfInLoop_NonLocalExit_ReportsSMA8032()
         {
             var test = @"
+using System;
+
 class C
 {
     void DoWork(int x) { }
 
-    void M(int[] items)
+    void MReturn(int[] items)
     {
         for (int i = 0; i < items.Length; i++)
         {
@@ -2219,9 +2221,37 @@ class C
             }
         }
     }
+
+    void MThrowStatement(int[] items)
+    {
+        for (int i = 0; i < items.Length; i++)
+        {
+            DoWork(items[i]);
+
+            if (items[i] == 0)
+            {
+                {|#1:throw|} new InvalidOperationException();
+            }
+        }
+    }
+
+    void MThrowExpression(int[] items)
+    {
+        for (int i = 0; i < items.Length; i++)
+        {
+            DoWork(items[i]);
+
+            if (items[i] == 0)
+            {
+                _ = items[i] != 0 ? items[i] : {|#2:throw|} new InvalidOperationException();
+            }
+        }
+    }
 }";
-            var expected = VerifyCS.Diagnostic(MidFlowBranchAnalyzer.RuleId_NonLocalExitFromLoop).WithLocation(0);
-            await VerifyCS.VerifyAnalyzerAsync(test, expected);
+            var expected0 = VerifyCS.Diagnostic(MidFlowBranchAnalyzer.RuleId_NonLocalExitFromLoop).WithLocation(0);
+            var expected1 = VerifyCS.Diagnostic(MidFlowBranchAnalyzer.RuleId_NonLocalExitFromLoop).WithLocation(1);
+            var expected2 = VerifyCS.Diagnostic(MidFlowBranchAnalyzer.RuleId_NonLocalExitFromLoop).WithLocation(2);
+            await VerifyCS.VerifyAnalyzerAsync(test, expected0, expected1, expected2);
         }
 
         [TestMethod]
