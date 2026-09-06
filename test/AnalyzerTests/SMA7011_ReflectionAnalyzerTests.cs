@@ -99,15 +99,18 @@ namespace Test
 
         public void M()
         {
-            var (a, b) = {|#0:GetTuple()|};
-            (MethodInfo mi, PropertyInfo pi) = {|#1:GetTuple()|};
+            {|#0:var|} (a, b) = {|#1:GetTuple()|};
+            ({|#2:MethodInfo|} mi, {|#3:PropertyInfo|} pi) = {|#4:GetTuple()|};
         }
     }
 }
 ";
             await VerifyCS.VerifyAnalyzerAsync(test,
-                VerifyCS.Diagnostic(ReflectionAnalyzer.RuleId_SystemReflectionUsage).WithLocation(0).WithArguments("GetTuple", "MethodInfo"),
-                VerifyCS.Diagnostic(ReflectionAnalyzer.RuleId_SystemReflectionUsage).WithLocation(1).WithArguments("GetTuple", "MethodInfo")
+                VerifyCS.Diagnostic(ReflectionAnalyzer.RuleId_SystemReflectionVariable).WithLocation(0).WithArguments("(a, b)", "(MethodInfo a, PropertyInfo b)"),
+                VerifyCS.Diagnostic(ReflectionAnalyzer.RuleId_SystemReflectionUsage).WithLocation(1).WithArguments("GetTuple", "MethodInfo"),
+                VerifyCS.Diagnostic(ReflectionAnalyzer.RuleId_SystemReflectionVariable).WithLocation(2).WithArguments("mi", "MethodInfo"),
+                VerifyCS.Diagnostic(ReflectionAnalyzer.RuleId_SystemReflectionVariable).WithLocation(3).WithArguments("pi", "PropertyInfo"),
+                VerifyCS.Diagnostic(ReflectionAnalyzer.RuleId_SystemReflectionUsage).WithLocation(4).WithArguments("GetTuple", "MethodInfo")
             );
         }
     }

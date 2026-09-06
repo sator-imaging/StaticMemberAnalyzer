@@ -49,6 +49,57 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             context.RegisterOperationAction(AnalyzeFieldReference, OperationKind.FieldReference);
             context.RegisterOperationAction(AnalyzeMethodReference, OperationKind.MethodReference);
             context.RegisterOperationAction(AnalyzeVariableDeclarator, OperationKind.VariableDeclarator);
+            context.RegisterOperationAction(AnalyzeDeclarationExpression, OperationKind.DeclarationExpression);
+        }
+
+        private static void AnalyzeDeclarationExpression(OperationAnalysisContext context)
+        {
+            if (context.Operation is not IDeclarationExpressionOperation declExprOp)
+            {
+                return;
+            }
+
+            if (declExprOp.Expression is ILocalReferenceOperation localRef)
+            {
+                var localSymbol = localRef.Local;
+                var reflectionType = FindReflectionType(localSymbol.Type);
+                if (reflectionType == null || reflectionType.TypeKind == TypeKind.Enum)
+                {
+                    return;
+                }
+
+                Location location;
+                if (declExprOp.Syntax is DeclarationExpressionSyntax declExprSyntax)
+                {
+                    location = declExprSyntax.Type.GetLocation();
+                }
+                else
+                {
+                    location = declExprOp.Syntax.GetLocation();
+                }
+
+                context.ReportDiagnostic(Diagnostic.Create(
+                    Rule_SystemReflectionVariable,
+                    location,
+                    localSymbol.Name,
+                    localSymbol.Type.ToDiagnosticMessageName()));
+            }
+            else if (declExprOp.Syntax is DeclarationExpressionSyntax { Type: { } typeSyntax } declExprSyntax)
+            {
+                // Deconstruction declaration like: var (a, b) = ...
+                // declExprOp.Expression is ITupleOperation or non-ILocalReferenceOperation
+                var reflectionType = FindReflectionType(declExprOp.Type);
+                if (reflectionType == null || reflectionType.TypeKind == TypeKind.Enum)
+                {
+                    return;
+                }
+
+                context.ReportDiagnostic(Diagnostic.Create(
+                    Rule_SystemReflectionVariable,
+                    typeSyntax.GetLocation(),
+                    declExprSyntax.Designation.ToString(),
+                    declExprOp.Type.ToDiagnosticMessageName()));
+            }
         }
 
         private static void AnalyzeInvocation(OperationAnalysisContext context)
@@ -126,11 +177,23 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                 return;
             }
 
-            var location = declarator.Syntax is VariableDeclaratorSyntax { Parent: VariableDeclarationSyntax varDecl }
-                ? varDecl.Type.GetLocation()
-                : (declarator.Symbol.Locations is { Length: > 0 } locations
-                    ? locations[0]
-                    : declarator.Syntax.GetLocation());
+            Location location;
+            if (declarator.Syntax is VariableDeclaratorSyntax { Parent: VariableDeclarationSyntax varDecl })
+            {
+                location = varDecl.Type.GetLocation();
+            }
+            else if (declarator.Syntax.Ancestors().OfType<DeclarationExpressionSyntax>().FirstOrDefault() is { } declExpr)
+            {
+                location = declExpr.Type.GetLocation();
+            }
+            else if (declarator.Symbol.Locations is { Length: > 0 } locations)
+            {
+                location = locations[0];
+            }
+            else
+            {
+                location = declarator.Syntax.GetLocation();
+            }
 
             context.ReportDiagnostic(Diagnostic.Create(
                 Rule_SystemReflectionVariable,
