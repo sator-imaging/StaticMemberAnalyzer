@@ -148,7 +148,10 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
 
         private static void AnalyzeNonLocalExitInLoop(SyntaxNodeAnalysisContext context)
         {
-            if (!IsInsideLoop(context.Node))
+            if (!IsInsideLoop(context.Node, out bool isLastStatement, out var loopStatement))
+                return;
+
+            if (isLastStatement && IsFollowedByNonLocalExit(loopStatement))
                 return;
 
             if (HasNonLocalExitSuppression(context.Node))
@@ -158,25 +161,54 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             context.ReportDiagnostic(Diagnostic.Create(Rule_NonLocalExitFromLoop, location));
         }
 
-        private static bool IsInsideLoop(SyntaxNode node)
+        private static bool IsInsideLoop(SyntaxNode node, out bool isLastStatement, out StatementSyntax? loopStatement)
         {
-            var current = node.Parent;
+            isLastStatement = true;
+            loopStatement = null;
+
+            var current = node;
             while (current != null)
             {
-                if (IsMethodLikeSyntax(current))
+                var parent = current.Parent;
+
+                if (parent is BlockSyntax block)
+                {
+                    if (block.Statements[block.Statements.Count - 1] != current)
+                    {
+                        isLastStatement = false;
+                    }
+                }
+
+                if (IsMethodLikeSyntax(parent))
                 {
                     return false;
                 }
 
-                if (IsLoopSyntax(current))
+                if (IsLoopSyntax(parent))
                 {
+                    loopStatement = parent as StatementSyntax;
                     return true;
                 }
 
-                current = current.Parent;
+                current = parent;
             }
 
             return false;
+        }
+
+        private static bool IsFollowedByNonLocalExit(StatementSyntax? loopStatement)
+        {
+            if (loopStatement?.Parent is not BlockSyntax parentBlock)
+                return false;
+
+            int count = parentBlock.Statements.Count;
+            if (count < 2 || parentBlock.Statements[count - 2] != loopStatement)
+                return false;
+
+            var nextStatement = parentBlock.Statements[count - 1];
+
+            // Don't support throw expression (`?? throw`) as it may or may not throw.
+            return nextStatement is ReturnStatementSyntax or ThrowStatementSyntax;
         }
 
         private static bool IsLoopSyntax(SyntaxNode? node)
