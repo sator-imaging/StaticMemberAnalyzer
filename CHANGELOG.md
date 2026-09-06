@@ -1,5 +1,21 @@
 # Changelog
 
+## [5.2.0-rc.15](https://github.com/sator-imaging/MeticulousAnalyzer/releases/tag/v5.2.0-rc.15) (2026-09-06)
+
+### 🚀 Features
+* Update `SMA8032` non-local exit exemption for loop-terminal `return`s / `throw`s by [@google-labs-jules](https://github.com/google-labs-jules)[bot] in [#626](https://github.com/sator-imaging/MeticulousAnalyzer/pull/626)
+### ✨ Bug Fixes
+* Fix diagnostic report failures due to null location checks by [@google-labs-jules](https://github.com/google-labs-jules)[bot] in [#623](https://github.com/sator-imaging/MeticulousAnalyzer/pull/623)
+### 📖 Documentation
+* docs: Reflect changes to MidFlowBranch analyzer in README files by [@google-labs-jules](https://github.com/google-labs-jules)[bot] in [#622](https://github.com/sator-imaging/MeticulousAnalyzer/pull/622)
+### 📚 Other Changes
+* Add performance idiom to AGENTS.md by [@google-labs-jules](https://github.com/google-labs-jules)[bot] in [#621](https://github.com/sator-imaging/MeticulousAnalyzer/pull/621)
+* Refactor MidFlowBranchAnalyzer to use IsInLoop helper method by [@google-labs-jules](https://github.com/google-labs-jules)[bot] in [#624](https://github.com/sator-imaging/MeticulousAnalyzer/pull/624)
+
+
+**Full Changelog**: https://github.com/sator-imaging/MeticulousAnalyzer/compare/v5.2.0-rc.14...v5.2.0-rc.15
+
+
 ## [5.2.0-rc.14](https://github.com/sator-imaging/MeticulousAnalyzer/releases/tag/v5.2.0-rc.14) (2026-09-06)
 
 ### 🚀 Features
