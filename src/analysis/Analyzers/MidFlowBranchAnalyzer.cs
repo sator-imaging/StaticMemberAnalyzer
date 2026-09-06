@@ -116,7 +116,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                     if (!isRootBlockComputed)
                     {
                         isRootBlockComputed = true;
-                        isRootBlock = IsMethodOrLoopRootSyntax(block.Parent);
+                        isRootBlock = IsMethodLikeOrLoopSyntax(block.Parent);
                     }
 
                     bool isLastInRootBlock = isRootBlock && i == count - 1;
@@ -375,7 +375,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             CollectAndReportBranchesInIfBranch(context, ifStmt);
         }
 
-        private static bool IsMethodOrLoopRootSyntax(SyntaxNode? node)
+        private static bool IsMethodLikeOrLoopSyntax(SyntaxNode? node)
         {
             return IsMethodLikeSyntax(node) || IsLoopSyntax(node);
         }
