@@ -59,46 +59,20 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                 return;
             }
 
-            if (declExprOp.Expression is ILocalReferenceOperation localRef)
+            var type = declExprOp.Type;
+            var reflectionType = FindReflectionType(type);
+            if (reflectionType == null || reflectionType.TypeKind == TypeKind.Enum)
             {
-                var localSymbol = localRef.Local;
-                var reflectionType = FindReflectionType(localSymbol.Type);
-                if (reflectionType == null || reflectionType.TypeKind == TypeKind.Enum)
-                {
-                    return;
-                }
-
-                Location location;
-                if (declExprOp.Syntax is DeclarationExpressionSyntax declExprSyntax)
-                {
-                    location = declExprSyntax.Type.GetLocation();
-                }
-                else
-                {
-                    location = declExprOp.Syntax.GetLocation();
-                }
-
-                context.ReportDiagnostic(Diagnostic.Create(
-                    Rule_SystemReflectionVariable,
-                    location,
-                    localSymbol.Name,
-                    localSymbol.Type.ToDiagnosticMessageName()));
+                return;
             }
-            else if (declExprOp.Syntax is DeclarationExpressionSyntax { Type: { } typeSyntax } declExprSyntax)
-            {
-                // Deconstruction declaration like: var (a, b) = ...
-                // declExprOp.Expression is ITupleOperation or non-ILocalReferenceOperation
-                var reflectionType = FindReflectionType(declExprOp.Type);
-                if (reflectionType == null || reflectionType.TypeKind == TypeKind.Enum)
-                {
-                    return;
-                }
 
+            if (declExprOp.Syntax is DeclarationExpressionSyntax declExprSyntax)
+            {
                 context.ReportDiagnostic(Diagnostic.Create(
                     Rule_SystemReflectionVariable,
-                    typeSyntax.GetLocation(),
+                    declExprSyntax.Type.GetLocation(),
                     declExprSyntax.Designation.ToString(),
-                    declExprOp.Type.ToDiagnosticMessageName()));
+                    type.ToDiagnosticMessageName()));
             }
         }
 
