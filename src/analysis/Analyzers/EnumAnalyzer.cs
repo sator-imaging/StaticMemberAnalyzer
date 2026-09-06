@@ -573,7 +573,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
 
             /* =      entries fields      = */
 
-            for (int i = 0; i < enumEntriesList.Count; i++)
+            for (int i = 0, count = enumEntriesList.Count; i < count; i++)
             {
                 AnalyzeEnumLikeEntriesField(context, enumEntriesList[i], enumFieldList);
             }
@@ -641,7 +641,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                         .Where(static x => x != null)
                         .ToArray();
 
-                    for (int i = 0; i < enumFieldList.Count; i++)
+                    for (int i = 0, count = enumFieldList.Count; i < count; i++)
                     {
                         if (!SymbolEqualityComparer.Default.Equals(initExprSymbols[i]/*checked*/!.Member, enumFieldList[i]))
                         {
