@@ -2225,6 +2225,53 @@ class C
         }
 
         [TestMethod]
+        public async Task SMA8030_Compliant_BlankLineFollows_Method()
+        {
+            var test = @"
+class C
+{
+    void DoWork() { }
+
+    void M(bool cond)
+    {
+        DoWork();
+
+        if (cond)
+        {
+            return;
+        }
+
+    }
+}";
+            await VerifyCS.VerifyAnalyzerAsync(test);
+        }
+
+        [TestMethod]
+        public async Task SMA8030_Compliant_BlankLineFollows_Loop()
+        {
+            var test = @"
+class C
+{
+    void DoWork(int x) { }
+
+    void M()
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            DoWork(i);
+
+            if (i == 5)
+            {
+                continue;
+            }
+
+        }
+    }
+}";
+            await VerifyCS.VerifyAnalyzerAsync(test);
+        }
+
+        [TestMethod]
         public async Task SMA8030_Violation_TrailingEmptyStatement_Method()
         {
             var test = @"
