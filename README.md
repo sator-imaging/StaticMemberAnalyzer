@@ -596,8 +596,12 @@ Once the main flow has started, exiting inside an incomplete branch (an `if` sta
 
 > [!NOTE]
 > An `if` statement (with or without an `else` clause) that is the last statement at the method root level or loop root level is exempted from this exit completeness check.
->
-> In addition, a `return` or `throw` statement inside a loop is exempted if it is the last statement hierarchically up to the loop syntax and the loop statement itself is immediately followed by a `return` or `throw` statement.
+
+### Non-Local Exit from Loop (SMA8032)
+Prohibits `return` or `throw` statements inside loops.
+
+> [!NOTE]
+> In addition, a `return` or `throw` statement inside a loop is not reported if it is the last statement in the loop and the loop statement itself is immediately followed by a `return` or `throw` statement.
 
 ```cs
 if (!IsValid()) return;  // Early return is allowed.
