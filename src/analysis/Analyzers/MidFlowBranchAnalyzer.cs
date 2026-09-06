@@ -151,7 +151,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             if (!IsInsideLoop(context.Node, out bool isLastStatement, out var loopStatement))
                 return;
 
-            if (isLastStatement && IsFollowedByThrowOrReturn(loopStatement))
+            if (isLastStatement && IsFollowedByNonLocalExit(loopStatement))
                 return;
 
             if (HasNonLocalExitSuppression(context.Node))
@@ -194,28 +194,18 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             return false;
         }
 
-        private static bool IsFollowedByThrowOrReturn(StatementSyntax? loopStatement)
+        private static bool IsFollowedByNonLocalExit(StatementSyntax? loopStatement)
         {
             if (loopStatement?.Parent is not BlockSyntax parentBlock)
                 return false;
 
-            int index = parentBlock.Statements.IndexOf(loopStatement);
-            if (index < 0 || index + 1 >= parentBlock.Statements.Count)
+            int count = parentBlock.Statements.Count;
+            if (count < 2 || parentBlock.Statements[count - 2] != loopStatement)
                 return false;
 
-            var nextStatement = parentBlock.Statements[index + 1];
-            return IsThrowOrReturnStatement(nextStatement);
-        }
-
-        private static bool IsThrowOrReturnStatement(StatementSyntax statement)
-        {
-            if (statement is ReturnStatementSyntax or ThrowStatementSyntax)
-                return true;
-
-            if (statement is ExpressionStatementSyntax exprStmt && exprStmt.Expression is ThrowExpressionSyntax)
-                return true;
-
-            return false;
+            var nextStatement = parentBlock.Statements[count - 1];
+            return nextStatement is ReturnStatementSyntax or ThrowStatementSyntax
+                || (nextStatement is ExpressionStatementSyntax exprStmt && exprStmt.Expression is ThrowExpressionSyntax);
         }
 
         private static bool IsLoopSyntax(SyntaxNode? node)
