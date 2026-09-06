@@ -347,7 +347,25 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                     continue;
                 }
 
-                if (parent is IfStatementSyntax or ElseClauseSyntax or SwitchSectionSyntax or SwitchStatementSyntax
+                if (parent is SwitchSectionSyntax switchSection)
+                {
+                    int index = switchSection.Statements.IndexOf((StatementSyntax)current);
+                    if (index >= 0)
+                    {
+                        for (int i = index + 1; i < switchSection.Statements.Count; i++)
+                        {
+                            var stmt = switchSection.Statements[i];
+                            if (stmt is not EmptyStatementSyntax)
+                            {
+                                return stmt;
+                            }
+                        }
+                    }
+                    current = switchSection;
+                    continue;
+                }
+
+                if (parent is IfStatementSyntax or ElseClauseSyntax or SwitchStatementSyntax
                     or TryStatementSyntax or CatchClauseSyntax or FinallyClauseSyntax
                     or UsingStatementSyntax or LockStatementSyntax or FixedStatementSyntax
                     or UnsafeStatementSyntax or LabeledStatementSyntax)
@@ -372,16 +390,6 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             if (statement is ExpressionStatementSyntax exprStmt)
             {
                 return exprStmt.Expression is ThrowExpressionSyntax;
-            }
-
-            if (statement is BlockSyntax block)
-            {
-                foreach (var stmt in block.Statements)
-                {
-                    if (stmt is EmptyStatementSyntax)
-                        continue;
-                    return IsReturnOrThrowStatement(stmt);
-                }
             }
 
             return false;
