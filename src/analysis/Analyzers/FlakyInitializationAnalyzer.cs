@@ -144,7 +144,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                 ClearAndCollectFieldInfo(
                     memberDeclStx, context.SemanticModel, declaredSymbolSet, declaredWithInitializerSymbolList, initializerRefOperatorList, token);
 
-                for (int i = 0; i < initializerRefOperatorList.Count; i++)
+                for (int i = 0, count = initializerRefOperatorList.Count; i < count; i++)
                 {
                     var refOp = initializerRefOperatorList[i];
 
@@ -215,7 +215,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
 
                             ClearAndCollectFieldInfo(crossField, crossModel, declaredSymbolSet: null, declaredWithInitializerSymbolList: null, crossRefOperatorList, token);
 
-                            for (int c = 0; c < crossRefOperatorList.Count; c++)
+                            for (int c = 0, crossCount = crossRefOperatorList.Count; c < crossCount; c++)
                             {
                                 if (!SymbolEqualityComparer.Default.Equals(crossRefOperatorList[c].Member.ContainingType, declaredWithInitializerSymbolList[i].ContainingType))
                                     continue;

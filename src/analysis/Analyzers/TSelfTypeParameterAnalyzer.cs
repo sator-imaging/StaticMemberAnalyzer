@@ -156,7 +156,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                     if (baseTypeParamList == null)
                         continue;
 
-                    for (int i = 0; i < baseTypeParamList.Parameters.Count; i++)
+                    for (int i = 0, count = baseTypeParamList.Parameters.Count; i < count; i++)
                     {
                         var param = baseTypeParamList.Parameters[i];
                         if (param.Identifier.Text == TSELF_NAME)
