@@ -583,12 +583,6 @@ if (foo.Length != 0)
 
 Do not introduce a new control flow branch in the middle of the main flow. Early exits (such as `return`, `continue`, `break`, `yield`, `throw`, `goto`) before the main flow begins are permitted, but state-changing operations before exiting are restricted.
 
-### Mid-flow Exits (SMA8030)
-Once the main flow has started, exiting inside an incomplete branch (an `if` statement that does not exit in all code paths) is prohibited (**SMA8030**).
-
-> [!NOTE]
-> An `if` statement (with or without an `else` clause) that is the last statement at the method root level or loop root level is exempted from this exit completeness check.
-
 ### Early Exit Block Restrictions (SMA8031)
 In an early exit block before the main flow starts, only the following statements are permitted before the exit statement:
 - Local variable declarations (including tuple declarations, `using var...`, and `await using var...`)
@@ -597,6 +591,11 @@ In an early exit block before the main flow starts, only the following statement
 
 Performing state modifications (such as reassignments or field updates) or calling multiple methods before exiting will trigger an error (**SMA8031**).
 
+### Mid-flow Exits (SMA8030)
+Once the main flow has started, exiting inside an incomplete branch (an `if` statement that does not exit in all code paths) is prohibited (**SMA8030**).
+
+> [!NOTE]
+> An `if` statement (with or without an `else` clause) that is the last statement at the method root level or loop root level is exempted from this exit completeness check.
 
 ```cs
 if (!IsValid()) return;  // Early return is allowed.
@@ -622,12 +621,6 @@ Alpha();
 Bravo();
 Charlie();
 ```
-
-### Non-Local Exit from Loop (SMA8032)
-Prohibits `return` or `throw` statements inside loops.
-
-> [!NOTE]
-> A `return` or `throw` statement inside a loop is not reported if it is the last statement in the loop and the loop statement itself is immediately followed by a `return` or `throw` statement.
 
 To avoid errors, use a complete `if-else` statement or extract methods to clarify the control flow.
 
