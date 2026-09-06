@@ -134,8 +134,8 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             var token = context.CancellationToken;
 
             var root = context.SemanticModel.SyntaxTree.GetRoot(token);
-            // TODO: FileScopedNamespaceDeclaration is not available in current Roslyn version
-            //       Filtering with ShouldDescendIntoMemberDeclaration will skip all type declarations in file-scoped namespaces.
+            // TODO: FileScopedNamespaceDeclarationSyntax is not available in current Roslyn version
+            //       so using ShouldDescendIntoMemberDeclaration will skip all type declarations in file-scoped namespaces.
             foreach (var memberDeclStx in root.DescendantNodes(/*static n => ShouldDescendIntoMemberDeclaration(n)*/).OfType<MemberDeclarationSyntax>())
             {
                 if (memberDeclStx is not BaseFieldDeclarationSyntax and not BasePropertyDeclarationSyntax)
