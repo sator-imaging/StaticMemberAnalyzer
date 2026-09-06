@@ -1,5 +1,22 @@
 # Changelog
 
+## [5.2.0-rc.14](https://github.com/sator-imaging/MeticulousAnalyzer/releases/tag/v5.2.0-rc.14) (2026-09-06)
+
+### 🚀 Features
+* Add `SMA8032` warning diagnostic for return in loops by [@google-labs-jules](https://github.com/google-labs-jules)[bot] in [#615](https://github.com/sator-imaging/MeticulousAnalyzer/pull/615)
+* Exempt last if statement at method or loop root level from completeness check (`MidFlowBranchAnalyzer`) by [@google-labs-jules](https://github.com/google-labs-jules)[bot] in [#618](https://github.com/sator-imaging/MeticulousAnalyzer/pull/618)
+### ✨ Bug Fixes
+* fix(analyzer): report `SMA7010` / `SMA7011` location on var or type syntax by [@google-labs-jules](https://github.com/google-labs-jules)[bot] in [#616](https://github.com/sator-imaging/MeticulousAnalyzer/pull/616)
+### 📖 Documentation
+* Merge tuple declarations into local variable declarations in READMEs by [@google-labs-jules](https://github.com/google-labs-jules)[bot] in [#614](https://github.com/sator-imaging/MeticulousAnalyzer/pull/614)
+* docs: chore by [@sator-imaging](https://github.com/sator-imaging) in [#617](https://github.com/sator-imaging/MeticulousAnalyzer/pull/617)
+### 📚 Other Changes
+* Refactor string resources to remove _Description and __MD_DESC__ by [@google-labs-jules](https://github.com/google-labs-jules)[bot] in [#619](https://github.com/sator-imaging/MeticulousAnalyzer/pull/619)
+
+
+**Full Changelog**: https://github.com/sator-imaging/MeticulousAnalyzer/compare/v5.2.0-rc.13...v5.2.0-rc.14
+
+
 ## [5.2.0-rc.13](https://github.com/sator-imaging/MeticulousAnalyzer/releases/tag/v5.2.0-rc.13) (2026-09-05)
 
 ### ✨ Bug Fixes
