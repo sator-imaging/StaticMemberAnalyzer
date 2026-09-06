@@ -233,14 +233,14 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                 return false;
             }
 
-            HashSet<int>? visited = null;
-            Stack<int>? stack = null;
-            (stack ??= new Stack<int>()).Push(declarationBlock);
+            var visited = new HashSet<int>();
+            var stack = new Stack<int>();
+            stack.Push(declarationBlock);
 
             do
             {
                 int currentOrdinal = stack.Pop();
-                if ((visited ??= new HashSet<int>()).Contains(currentOrdinal))
+                if (visited.Contains(currentOrdinal))
                 {
                     continue;
                 }
