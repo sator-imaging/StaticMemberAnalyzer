@@ -28,6 +28,7 @@ class C
             {
                 {|#0:return|} i;
             }
+            Console.WriteLine(i);
         }
         return -1;
     }
@@ -149,6 +150,78 @@ class C
     }
 }";
             await VerifyCS.VerifyAnalyzerAsync(test);
+        }
+
+        [TestMethod]
+        public async Task SMA8032_Compliant_LastStatementInLoopFollowedByReturnOrThrow()
+        {
+            var test = @"
+using System;
+
+class C
+{
+    void M1(bool foo, bool bar)
+    {
+        foreach (var item in new[] { 1, 2 })
+        {
+            if (foo)
+            {
+                return;
+            }
+            else if (bar) return;
+        }
+
+        throw new Exception();
+    }
+
+    int M2(int[] items)
+    {
+        foreach (var item in items)
+        {
+            if (item == 0) return item;
+        }
+
+        return -1;
+    }
+}";
+            await VerifyCS.VerifyAnalyzerAsync(test);
+        }
+
+        [TestMethod]
+        public async Task SMA8032_Violation_NotLastStatementInLoopOrNotFollowedByReturnOrThrow()
+        {
+            var test = @"
+using System;
+
+class C
+{
+    void M1(bool foo, bool bar)
+    {
+        foreach (var item in new[] { 1, 2 })
+        {
+            if (foo)
+            {
+                {|#0:return|};
+            }
+            Console.WriteLine(item);
+        }
+
+        throw new Exception();
+    }
+
+    void M2(int[] items)
+    {
+        foreach (var item in items)
+        {
+            if (item == 0) {|#1:return|};
+        }
+
+        Console.WriteLine(""Done"");
+    }
+}";
+            var expected0 = VerifyCS.Diagnostic(MidFlowBranchAnalyzer.RuleId_NonLocalExitFromLoop).WithLocation(0);
+            var expected1 = VerifyCS.Diagnostic(MidFlowBranchAnalyzer.RuleId_NonLocalExitFromLoop).WithLocation(1);
+            await VerifyCS.VerifyAnalyzerAsync(test, expected0, expected1);
         }
     }
 }

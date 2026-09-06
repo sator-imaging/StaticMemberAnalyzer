@@ -148,7 +148,10 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
 
         private static void AnalyzeNonLocalExitInLoop(SyntaxNodeAnalysisContext context)
         {
-            if (!IsInsideLoop(context.Node))
+            if (!IsInsideLoop(context.Node, out bool isLastStatement, out StatementSyntax? nextStatementAfterLoop))
+                return;
+
+            if (isLastStatement && IsReturnOrThrowStatement(nextStatementAfterLoop))
                 return;
 
             if (HasNonLocalExitSuppression(context.Node))
@@ -158,22 +161,62 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             context.ReportDiagnostic(Diagnostic.Create(Rule_NonLocalExitFromLoop, location));
         }
 
-        private static bool IsInsideLoop(SyntaxNode node)
+        private static bool IsInsideLoop(SyntaxNode node, out bool isLastStatement, out StatementSyntax? nextStatementAfterLoop)
         {
-            var current = node.Parent;
-            while (current != null)
+            isLastStatement = true;
+            nextStatementAfterLoop = null;
+
+            var current = node;
+            while (current.Parent != null)
             {
-                if (IsMethodLikeSyntax(current))
+                var parent = current.Parent;
+
+                if (IsMethodLikeSyntax(parent))
                 {
                     return false;
                 }
 
-                if (IsLoopSyntax(current))
+                if (parent is BlockSyntax block)
                 {
+                    var statements = block.Statements;
+                    if (statements.Count > 0 && statements[statements.Count - 1] != current)
+                    {
+                        isLastStatement = false;
+                    }
+                }
+
+                if (IsLoopSyntax(parent))
+                {
+                    if (parent.Parent is BlockSyntax loopParentBlock)
+                    {
+                        var loopStatements = loopParentBlock.Statements;
+                        int index = loopStatements.IndexOf((StatementSyntax)parent);
+                        if (index >= 0 && index + 1 < loopStatements.Count)
+                        {
+                            nextStatementAfterLoop = loopStatements[index + 1];
+                        }
+                    }
                     return true;
                 }
 
-                current = current.Parent;
+                current = parent;
+            }
+
+            return false;
+        }
+
+        private static bool IsReturnOrThrowStatement(StatementSyntax? statement)
+        {
+            if (statement == null)
+                return false;
+
+            if (statement is ReturnStatementSyntax or ThrowStatementSyntax)
+                return true;
+
+            if (statement is ExpressionStatementSyntax exprStmt)
+            {
+                return exprStmt.Expression is ThrowExpressionSyntax ||
+                       exprStmt.Expression.DescendantNodes().Any(static n => n is ThrowExpressionSyntax);
             }
 
             return false;
