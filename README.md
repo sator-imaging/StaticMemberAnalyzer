@@ -623,6 +623,9 @@ Bravo();
 Charlie();
 ```
 
+### Non-Local Exit from Loop (SMA8032)
+Prohibits `return` or `throw` statements inside loops.
+
 > [!NOTE]
 > A `return` or `throw` statement inside a loop is not reported if it is the last statement in the loop and the loop statement itself is immediately followed by a `return` or `throw` statement.
 
