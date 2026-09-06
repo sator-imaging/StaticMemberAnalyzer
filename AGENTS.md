@@ -2,3 +2,19 @@
 - When implementing codefix provider: [Read this](./src/README.md)
 - When using LINQ (System.Linq): [Read this](./src/README.md#linq-migration-guide)
 - When adding new tests: [Read this](./test/README.md)
+
+# Idioms for performance
+
+```cs
+for (int i = 0; i < list.Count; i++)
+```
+
+This is slow in .NET Standard 2.0 environment.
+
+Change this to:
+
+```cs
+for (int i = 0, count = list.Count; i < count; i++)
+```
+
+This can reduce property access that is not inlined in older runtime.
