@@ -121,9 +121,9 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
 
                     bool isLastInRootBlock = isRootBlock && i == count - 1;
 
-                    if (isMainFlowStarted)
+                    if (isMainFlowStarted && !isLastInRootBlock)
                     {
-                        CheckAndReportMidFlowBranches(context, ifStmt, isLastInRootBlock);
+                        CheckAndReportMidFlowBranches(context, ifStmt);
                     }
                     else
                     {
@@ -361,13 +361,8 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             return false;
         }
 
-        private static void CheckAndReportMidFlowBranches(SyntaxNodeAnalysisContext context, IfStatementSyntax ifStmt, bool isLastInRootBlock)
+        private static void CheckAndReportMidFlowBranches(SyntaxNodeAnalysisContext context, IfStatementSyntax ifStmt)
         {
-            if (isLastInRootBlock)
-            {
-                return;
-            }
-
             if (AllBranchesBranch(ifStmt))
             {
                 return;
