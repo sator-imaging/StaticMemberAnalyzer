@@ -148,8 +148,18 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
 
         private static void AnalyzeNonLocalExitInLoop(SyntaxNodeAnalysisContext context)
         {
-            if (!IsInsideLoop(context.Node))
+            var loopNode = GetEnclosingLoop(context.Node);
+            if (loopNode == null)
                 return;
+
+            if (IsLastStatementInHierarchyUpToLoop(context.Node, loopNode))
+            {
+                var nextStmt = GetNextStatementAfter(loopNode);
+                if (nextStmt != null && IsReturnOrThrowStatement(nextStmt))
+                {
+                    return;
+                }
+            }
 
             if (HasNonLocalExitSuppression(context.Node))
                 return;
@@ -158,22 +168,220 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             context.ReportDiagnostic(Diagnostic.Create(Rule_NonLocalExitFromLoop, location));
         }
 
-        private static bool IsInsideLoop(SyntaxNode node)
+        private static SyntaxNode? GetEnclosingLoop(SyntaxNode node)
         {
             var current = node.Parent;
             while (current != null)
             {
                 if (IsMethodLikeSyntax(current))
                 {
-                    return false;
+                    return null;
                 }
 
                 if (IsLoopSyntax(current))
                 {
-                    return true;
+                    return current;
                 }
 
                 current = current.Parent;
+            }
+
+            return null;
+        }
+
+        private static bool IsLastStatementInHierarchyUpToLoop(SyntaxNode exitNode, SyntaxNode loopNode)
+        {
+            SyntaxNode? startNode = exitNode is ThrowExpressionSyntax throwExpr
+                ? throwExpr.FirstAncestorOrSelf<StatementSyntax>()
+                : exitNode as StatementSyntax;
+
+            if (startNode == null)
+                return false;
+
+            SyntaxNode child = startNode;
+            while (child != null && child != loopNode)
+            {
+                SyntaxNode? parent = child.Parent;
+                if (parent == null)
+                    return false;
+
+                if (parent == loopNode)
+                {
+                    return IsLoopBody(loopNode, child);
+                }
+
+                if (!IsLastInParent(parent, child))
+                {
+                    return false;
+                }
+
+                child = parent;
+            }
+
+            return false;
+        }
+
+        private static bool IsLoopBody(SyntaxNode loopNode, SyntaxNode child)
+        {
+            return loopNode switch
+            {
+                ForStatementSyntax forStmt => child == forStmt.Statement,
+                ForEachStatementSyntax foreachStmt => child == foreachStmt.Statement,
+                ForEachVariableStatementSyntax foreachVar => child == foreachVar.Statement,
+                WhileStatementSyntax whileStmt => child == whileStmt.Statement,
+                DoStatementSyntax doStmt => child == doStmt.Statement,
+                _ => false,
+            };
+        }
+
+        private static bool IsLastInParent(SyntaxNode parent, SyntaxNode child)
+        {
+            if (parent is BlockSyntax block)
+            {
+                for (int i = block.Statements.Count - 1; i >= 0; i--)
+                {
+                    var stmt = block.Statements[i];
+                    if (stmt is EmptyStatementSyntax)
+                        continue;
+                    return stmt == child;
+                }
+                return false;
+            }
+
+            if (parent is IfStatementSyntax ifStmt)
+            {
+                return child == ifStmt.Statement || child == ifStmt.Else;
+            }
+
+            if (parent is ElseClauseSyntax elseClause)
+            {
+                return child == elseClause.Statement;
+            }
+
+            if (parent is SwitchSectionSyntax switchSection)
+            {
+                for (int i = switchSection.Statements.Count - 1; i >= 0; i--)
+                {
+                    var stmt = switchSection.Statements[i];
+                    if (stmt is EmptyStatementSyntax)
+                        continue;
+                    return stmt == child;
+                }
+                return false;
+            }
+
+            if (parent is SwitchStatementSyntax)
+            {
+                return child is SwitchSectionSyntax;
+            }
+
+            if (parent is TryStatementSyntax tryStmt)
+            {
+                return child == tryStmt.Block || tryStmt.Catches.Contains(child) || child == tryStmt.Finally;
+            }
+
+            if (parent is CatchClauseSyntax catchClause)
+            {
+                return child == catchClause.Block;
+            }
+
+            if (parent is FinallyClauseSyntax finallyClause)
+            {
+                return child == finallyClause.Block;
+            }
+
+            if (parent is LabeledStatementSyntax labeledStmt)
+            {
+                return child == labeledStmt.Statement;
+            }
+
+            if (parent is UsingStatementSyntax usingStmt)
+            {
+                return child == usingStmt.Statement;
+            }
+
+            if (parent is FixedStatementSyntax fixedStmt)
+            {
+                return child == fixedStmt.Statement;
+            }
+
+            if (parent is LockStatementSyntax lockStmt)
+            {
+                return child == lockStmt.Statement;
+            }
+
+            if (parent is UnsafeStatementSyntax unsafeStmt)
+            {
+                return child == unsafeStmt.Block;
+            }
+
+            return false;
+        }
+
+        private static StatementSyntax? GetNextStatementAfter(SyntaxNode node)
+        {
+            SyntaxNode? current = node;
+            while (current != null)
+            {
+                var parent = current.Parent;
+                if (parent == null || IsMethodLikeSyntax(parent))
+                {
+                    return null;
+                }
+
+                if (parent is BlockSyntax block)
+                {
+                    int index = block.Statements.IndexOf((StatementSyntax)current);
+                    if (index >= 0)
+                    {
+                        for (int i = index + 1; i < block.Statements.Count; i++)
+                        {
+                            var stmt = block.Statements[i];
+                            if (stmt is not EmptyStatementSyntax)
+                            {
+                                return stmt;
+                            }
+                        }
+                    }
+                    current = block;
+                    continue;
+                }
+
+                if (parent is IfStatementSyntax or ElseClauseSyntax or SwitchSectionSyntax or SwitchStatementSyntax
+                    or TryStatementSyntax or CatchClauseSyntax or FinallyClauseSyntax
+                    or UsingStatementSyntax or LockStatementSyntax or FixedStatementSyntax
+                    or UnsafeStatementSyntax or LabeledStatementSyntax)
+                {
+                    current = parent;
+                    continue;
+                }
+
+                return null;
+            }
+
+            return null;
+        }
+
+        private static bool IsReturnOrThrowStatement(StatementSyntax statement)
+        {
+            if (statement is ReturnStatementSyntax or ThrowStatementSyntax)
+            {
+                return true;
+            }
+
+            if (statement is ExpressionStatementSyntax exprStmt)
+            {
+                return exprStmt.Expression is ThrowExpressionSyntax;
+            }
+
+            if (statement is BlockSyntax block)
+            {
+                foreach (var stmt in block.Statements)
+                {
+                    if (stmt is EmptyStatementSyntax)
+                        continue;
+                    return IsReturnOrThrowStatement(stmt);
+                }
             }
 
             return false;

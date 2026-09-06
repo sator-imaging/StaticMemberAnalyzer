@@ -28,6 +28,7 @@ class C
             {
                 {|#0:return|} i;
             }
+            Console.WriteLine(i);
         }
         return -1;
     }
@@ -146,6 +147,44 @@ class C
             f();
             LocalFunc();
         }
+    }
+}";
+            await VerifyCS.VerifyAnalyzerAsync(test);
+        }
+
+        [TestMethod]
+        public async Task SMA8032_Compliant_ExemptedWhenLastInLoopAndFollowedByReturnOrThrow()
+        {
+            var test = @"
+using System;
+
+class C
+{
+    int M1(int[] items, bool foo, bool bar)
+    {
+        foreach (var item in items)
+        {
+            if (foo)
+            {
+                return 1;
+            }
+            else if (bar) return 2;
+        }
+
+        throw new Exception();
+    }
+
+    int M2(int[] items)
+    {
+        for (int i = 0; i < items.Length; i++)
+        {
+            if (items[i] == 0)
+            {
+                return i;
+            }
+        }
+
+        return -1;
     }
 }";
             await VerifyCS.VerifyAnalyzerAsync(test);
