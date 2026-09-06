@@ -67,12 +67,15 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             if (context.Node is not BlockSyntax block)
                 return;
 
+            bool isRootBlock = IsMethodOrLoopRoot(block.Parent);
             bool isMainFlowStarted = false;
             bool hasDeclarationInCurrentSequence = false;
             bool hasSeenIf = false;
 
-            foreach (var statement in block.Statements)
+            for (int i = 0; i < block.Statements.Count; i++)
             {
+                var statement = block.Statements[i];
+
                 if (statement is EmptyStatementSyntax)
                 {
                     continue;
@@ -109,9 +112,11 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                         isMainFlowStarted = false;
                     }
 
+                    bool isLastInRootBlock = isRootBlock && IsLastStatementInBlock(block.Statements, i);
+
                     if (isMainFlowStarted)
                     {
-                        CheckAndReportMidFlowBranches(context, ifStmt);
+                        CheckAndReportMidFlowBranches(context, ifStmt, isLastInRootBlock);
                     }
                     else
                     {
@@ -132,6 +137,18 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                     isMainFlowStarted = true;
                 }
             }
+        }
+
+        private static bool IsLastStatementInBlock(SyntaxList<StatementSyntax> statements, int currentIndex)
+        {
+            for (int i = currentIndex + 1; i < statements.Count; i++)
+            {
+                if (statements[i] is not EmptyStatementSyntax)
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         private static void AnalyzeNonLocalExitInLoop(SyntaxNodeAnalysisContext context)
@@ -349,9 +366,9 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             return false;
         }
 
-        private static void CheckAndReportMidFlowBranches(SyntaxNodeAnalysisContext context, IfStatementSyntax ifStmt)
+        private static void CheckAndReportMidFlowBranches(SyntaxNodeAnalysisContext context, IfStatementSyntax ifStmt, bool isLastInRootBlock)
         {
-            if (IsLastIfAtMethodOrLoopRootLevel(ifStmt))
+            if (isLastInRootBlock)
             {
                 return;
             }
@@ -364,54 +381,13 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             CollectAndReportBranchesInIfBranch(context, ifStmt);
         }
 
-        private static bool IsLastIfAtMethodOrLoopRootLevel(IfStatementSyntax ifStmt)
-        {
-            var currentIf = ifStmt;
-            while (currentIf.Parent is ElseClauseSyntax elseClause && elseClause.Parent is IfStatementSyntax parentIf)
-            {
-                currentIf = parentIf;
-            }
-
-            var parent = currentIf.Parent;
-            if (parent is BlockSyntax block)
-            {
-                int index = block.Statements.IndexOf(currentIf);
-                if (index < 0)
-                {
-                    return false;
-                }
-
-                for (int i = index + 1; i < block.Statements.Count; i++)
-                {
-                    if (block.Statements[i] is not EmptyStatementSyntax)
-                    {
-                        return false;
-                    }
-                }
-
-                var container = block.Parent;
-                return IsMethodOrLoopRoot(container);
-            }
-
-            return IsLoopRoot(parent);
-        }
-
         private static bool IsMethodOrLoopRoot(SyntaxNode? node)
-        {
-            return IsMethodRoot(node) || IsLoopRoot(node);
-        }
-
-        private static bool IsMethodRoot(SyntaxNode? node)
         {
             return node is BaseMethodDeclarationSyntax
                 or LocalFunctionStatementSyntax
                 or AccessorDeclarationSyntax
-                or AnonymousFunctionExpressionSyntax;
-        }
-
-        private static bool IsLoopRoot(SyntaxNode? node)
-        {
-            return node is ForStatementSyntax
+                or AnonymousFunctionExpressionSyntax
+                or ForStatementSyntax
                 or ForEachStatementSyntax
                 or ForEachVariableStatementSyntax
                 or WhileStatementSyntax
