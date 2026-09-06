@@ -116,7 +116,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                     if (!isRootBlockComputed)
                     {
                         isRootBlockComputed = true;
-                        isRootBlock = IsMethodOrLoopRoot(block.Parent);
+                        isRootBlock = IsMethodOrLoopRootSyntax(block.Parent);
                     }
 
                     bool isLastInRootBlock = isRootBlock && i == count - 1;
@@ -163,12 +163,12 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             var current = node.Parent;
             while (current != null)
             {
-                if (current is LocalFunctionStatementSyntax or AnonymousFunctionExpressionSyntax)
+                if (IsMethodLikeSyntax(current))
                 {
                     return false;
                 }
 
-                if (IsInLoop(current))
+                if (IsLoopSyntax(current))
                 {
                     return true;
                 }
@@ -179,13 +179,21 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             return false;
         }
 
-        private static bool IsInLoop(SyntaxNode? node)
+        private static bool IsLoopSyntax(SyntaxNode? node)
         {
             return node is ForStatementSyntax
                 or ForEachStatementSyntax
                 or ForEachVariableStatementSyntax
                 or WhileStatementSyntax
                 or DoStatementSyntax;
+        }
+
+        private static bool IsMethodLikeSyntax(SyntaxNode? node)
+        {
+            return node is BaseMethodDeclarationSyntax
+                or LocalFunctionStatementSyntax
+                or AccessorDeclarationSyntax
+                or AnonymousFunctionExpressionSyntax;
         }
 
         private static bool HasNonLocalExitSuppression(SyntaxNode node)
@@ -339,9 +347,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
 
         private static bool ShouldDescendInto(SyntaxNode node)
         {
-            return !(node is LocalFunctionStatementSyntax
-                or AnonymousFunctionExpressionSyntax)
-                && !IsInLoop(node);
+            return !IsMethodLikeSyntax(node) && !IsLoopSyntax(node);
         }
 
         private static bool ContainsBranch(SyntaxNode node)
@@ -369,13 +375,9 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             CollectAndReportBranchesInIfBranch(context, ifStmt);
         }
 
-        private static bool IsMethodOrLoopRoot(SyntaxNode? node)
+        private static bool IsMethodOrLoopRootSyntax(SyntaxNode? node)
         {
-            return node is BaseMethodDeclarationSyntax
-                or LocalFunctionStatementSyntax
-                or AccessorDeclarationSyntax
-                or AnonymousFunctionExpressionSyntax
-                || IsInLoop(node);
+            return IsMethodLikeSyntax(node) || IsLoopSyntax(node);
         }
 
         private static void CollectAndReportBranchesInIfBranch(SyntaxNodeAnalysisContext context, IfStatementSyntax ifStmt)
