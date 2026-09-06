@@ -154,11 +154,8 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             if (HasNonLocalExitSuppression(context.Node))
                 return;
 
-            var location = GetBranchLocation(context.Node);
-            if (location != null)
-            {
-                context.ReportDiagnostic(Diagnostic.Create(Rule_NonLocalExitFromLoop, location));
-            }
+            var location = GetBranchLocation(context.Node) ?? context.Node.GetLocation();
+            context.ReportDiagnostic(Diagnostic.Create(Rule_NonLocalExitFromLoop, location));
         }
 
         private static bool IsInsideLoop(SyntaxNode node)
