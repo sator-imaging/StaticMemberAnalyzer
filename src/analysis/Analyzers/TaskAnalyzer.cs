@@ -159,7 +159,7 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
                 var block = allBlocks[i];
                 bool isHandled = false;
 
-                var operations = new List<IOperation>(block.Operations.Length + 1);
+                var operations = ImmutableList.CreateBuilder<IOperation>();
                 foreach (var op in block.Operations)
                 {
                     operations.Add(op);
@@ -231,12 +231,11 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
             }
 
             var visited = new HashSet<int>();
-            var stack = new Stack<int>();
-            stack.Push(declarationBlock);
+            var stack = ImmutableStack<int>.Empty.Push(declarationBlock);
 
             do
             {
-                int currentOrdinal = stack.Pop();
+                stack = stack.Pop(out int currentOrdinal);
                 if (visited.Contains(currentOrdinal))
                 {
                     continue;
@@ -258,15 +257,15 @@ namespace SatorImaging.MeticulousAnalyzer.Analysis.Analyzers
 
                 if (currentBlock.FallThroughSuccessor != null)
                 {
-                    stack.Push(currentBlock.FallThroughSuccessor.Destination.Ordinal);
+                    stack = stack.Push(currentBlock.FallThroughSuccessor.Destination.Ordinal);
                 }
 
                 if (currentBlock.ConditionalSuccessor != null)
                 {
-                    stack.Push(currentBlock.ConditionalSuccessor.Destination.Ordinal);
+                    stack = stack.Push(currentBlock.ConditionalSuccessor.Destination.Ordinal);
                 }
             }
-            while (stack.Count > 0);
+            while (!stack.IsEmpty);
 
             inAllCodePaths = true;
             return true;
