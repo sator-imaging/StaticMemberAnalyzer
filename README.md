@@ -677,6 +677,26 @@ foreach (var item in items)
 > [!TIP]
 > If an else-less `if` statement is unexpectedly detected as a mid-flow branch, you can place a comment starting with `// Early exit` (e.g., `// Early exit: Description (optional)`) immediately before the `if` keyword to treat it as an early exit block.
 
+### Non-Local Exit from Loop (SMA8032)
+Exiting non-locally from inside a loop (using `return`, `throw`, or `throw` expression) is prohibited (**SMA8032**). Use local exits such as `break`, `continue`, or `goto` instead to keep control flow clear and predictable.
+
+> [!NOTE]
+> `yield return` and `yield break` statements inside loops are exempted. In addition, non-local exits inside local functions or lambdas declared within loops, or non-local exits at the very end of a loop that are followed by a `return` or `throw` statement, are also exempted.
+
+```cs
+for (int i = 0; i < items.Length; i++)
+{
+    if (items[i] == 0)
+    {
+        return i;
+        ~~~~~~ // Error (SMA8032): Avoid non-local exit from loop.
+    }
+}
+```
+
+> [!TIP]
+> You can suppress by comment `// Allow non-local exit from loop`; See [Suppression Comment](#suppression-comment) section for detail.
+
 
 
 

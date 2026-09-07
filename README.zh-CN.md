@@ -677,6 +677,26 @@ foreach (var item in items)
 > [!TIP]
 > 如果无 `else` 的 `if` 语句被意外检测为中途分支，可以在 `if` 关键字前添加以 `// Early exit` 开头的注释（例如 `// Early exit: 说明（可选）`）将其标记为早期退出块。
 
+### 循环内部的非局部退出（SMA8032）
+禁止从循环内部进行非局部退出（使用 `return`、`throw` 或 `throw` 表达式）（**SMA8032**）。请改用 `break`、`continue` 或 `goto` 等局部退出语句，以保持控制流清晰且可预测。
+
+> [!NOTE]
+> 循环内部的 `yield return` 和 `yield break` 语句不受此规则限制。此外，在循环内部声明的局部函数或 Lambda 表达式内部的非局部退出，以及紧随 `return` 或 `throw` 语句之前的循环最末尾的非局部退出，也免受此规则限制。
+
+```cs
+for (int i = 0; i < items.Length; i++)
+{
+    if (items[i] == 0)
+    {
+        return i;
+        ~~~~~~ // 错误 (SMA8032)：避免从循环内部进行非局部退出。
+    }
+}
+```
+
+> [!TIP]
+> 可以通过注释 `// Allow non-local exit from loop` 来抑制；详见 [通过注释抑制](#通过注释抑制) 章节。
+
 
 
 
